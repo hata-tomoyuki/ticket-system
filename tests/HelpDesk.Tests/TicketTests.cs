@@ -11,7 +11,7 @@ public class TicketTests
     private static readonly DateTimeOffset ResolvedAt = new(2026, 9, 14, 17, 0, 0, TimeSpan.FromHours(9));
 
     private static Ticket CreateTicket() =>
-        Ticket.Create(1, "プリンタが動かない", "オフラインと表示されます。", "営業部 山田", CreatedAt);
+        Ticket.Create("プリンタが動かない", "オフラインと表示されます。", "営業部 山田", CreatedAt);
 
     [Fact]
     public void 受け付けた直後は未対応()
@@ -29,13 +29,13 @@ public class TicketTests
     public void 件名が空のチケットは作れない(string title)
     {
         Assert.Throws<ArgumentException>(
-            () => Ticket.Create(1, title, "本文", "営業部 山田", CreatedAt));
+            () => Ticket.Create(title, "本文", "営業部 山田", CreatedAt));
     }
 
     [Fact]
     public void 件名と依頼者名は前後の空白が取り除かれる()
     {
-        var ticket = Ticket.Create(1, "  プリンタが動かない  ", "本文", "  営業部 山田  ", CreatedAt);
+        var ticket = Ticket.Create("  プリンタが動かない  ", "本文", "  営業部 山田  ", CreatedAt);
 
         Assert.Equal("プリンタが動かない", ticket.Title);
         Assert.Equal("営業部 山田", ticket.RequesterName);
