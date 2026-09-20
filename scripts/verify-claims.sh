@@ -270,6 +270,55 @@ check "enum は範囲外の値へキャストできる（エラーにならな�
 
 # --------------------------------------------------------------------
 echo
+echo "[9] 静的 SSR でもフォーム POST は動く  (rendermodes.md)"
+# --------------------------------------------------------------------
+d="$(clone formpost)"
+cat > "$d/src/HelpDesk.Web/Components/Pages/FormProbe.razor" <<'EOF'
+@page "/form-probe"
+
+@if (submitted is not null)
+{
+    <p id="result">受け取った値: @submitted</p>
+}
+
+<EditForm Model="Model" FormName="probe" OnValidSubmit="Submit">
+    <InputText @bind-Value="Model!.Title" />
+    <button type="submit">送信</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private ProbeModel? Model { get; set; }
+
+    private string? submitted;
+
+    protected override void OnInitialized() => Model ??= new();
+
+    private void Submit() => submitted = Model!.Title;
+
+    public sealed class ProbeModel
+    {
+        public string? Title { get; set; }
+    }
+}
+EOF
+if start_app "$d"; then
+  curl -s -c "$WORK/cookies.txt" "http://localhost:$PORT/form-probe" > "$WORK/form.html"
+  check "フォームは素の <form method=\"post\"> として出力される" "1" \
+        "$(grep -c '<form method="post"' "$WORK/form.html" || true)"
+  token="$(grep -oE 'name="__RequestVerificationToken" value="[^"]+"' "$WORK/form.html" | sed 's/.*value="//;s/"$//')"
+  curl -s -b "$WORK/cookies.txt" -X POST "http://localhost:$PORT/form-probe" \
+      --data-urlencode "_handler=probe" \
+      --data-urlencode "__RequestVerificationToken=$token" \
+      --data-urlencode "Model.Title=verified-by-curl" \
+      -o "$WORK/posted.html"
+  check "curl の POST だけで C# の Submit() が動く" "1" \
+        "$(grep -c 'verified-by-curl' "$WORK/posted.html" || true)"
+fi
+pkill -f "HelpDesk.Web" >/dev/null 2>&1
+
+# --------------------------------------------------------------------
+echo
 echo "=============================================================="
 printf ' 合格 %d / 失敗 %d\n' "$pass" "$fail"
 echo "=============================================================="
