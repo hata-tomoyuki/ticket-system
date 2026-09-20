@@ -1,0 +1,2 @@
+# EF Core が生成するファイル。読む対象ではないので差分では折りたたむ。
+src/HelpDesk.Infrastructure/Migrations/** linguist-generated=true
