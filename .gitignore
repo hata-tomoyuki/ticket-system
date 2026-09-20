@@ -1,0 +1,22 @@
+# ビルド成果物
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+
+# ローカル設定・DB（ステージ2以降）
+appsettings.*.local.json
+*.db
+*.db-shm
+*.db-wal

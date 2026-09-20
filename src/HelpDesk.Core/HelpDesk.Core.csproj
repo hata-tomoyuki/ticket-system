@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 設定は Directory.Build.props に集約。ここには何も書かない。 -->
+
+</Project>
