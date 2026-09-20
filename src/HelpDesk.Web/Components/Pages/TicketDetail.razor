@@ -2,10 +2,12 @@
 @inject ITicketRepository Repository
 @inject NavigationManager Navigation
 
+@* PageTitle は @if の外に置くこと。
+   中に入れると Razor のコード生成が壊れ、@code ブロックがクラスの外に出てしまう。 *@
+<PageTitle>@(ticket?.Title ?? "チケット")</PageTitle>
+
 @if (ticket is not null)
 {
-    <PageTitle>@ticket.Title</PageTitle>
-
     <p><a href="/tickets">&laquo; チケット一覧へ</a></p>
 
     <h1>@ticket.Title</h1>
