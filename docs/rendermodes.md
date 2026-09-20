@@ -2,19 +2,30 @@
 
 ステージ 0・1 の文中で使った言い方が曖昧だったので、実際に動かして確かめた結果とあわせて整理します。
 
+> **この文書の根拠について**
+> 実行して確かめた主張は `./scripts/verify-claims.sh` で誰でも再検証できます（該当箇所に 🔬）。
+> 実行では確かめられない定義や仕様は公式ドキュメントの該当箇所を示します（📘）。
+> どちらでもない、筆者の理解にすぎない記述には ⚠️ を付けています。
+
 ## 結論を先に
 
-Blazor には C# の動き方が 3 通りあります。
+📘 Blazor Web App のレンダーモードは **4 つ**です。
+（出典: [ASP.NET Core Blazor render modes](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-10.0) の Render modes 表）
 
-| モード | C# が動く場所 | C# が動いている期間 | ボタンを押すと |
+| 公式名 | 日本語で言うと | C# が動く場所 | 対話可能か |
 |---|---|---|---|
-| **静的 SSR**（今のアプリ） | サーバー | HTML を組み立てる一瞬だけ | **何も起きない** |
-| **InteractiveServer** | サーバー | ブラウザを閉じるまでずっと | WebSocket 越しにサーバーの C# が動く |
-| **InteractiveWebAssembly** | **ブラウザの中** | ブラウザを閉じるまでずっと | ブラウザの中の C# が動く |
+| **Static Server** | 静的 SSR（**今のアプリ**） | サーバー | ❌ |
+| **Interactive Server** | Blazor Server | サーバー | ✔️ |
+| **Interactive WebAssembly** | Blazor WebAssembly | **クライアント（ブラウザ）** | ✔️ |
+| **Interactive Auto** | 最初はサーバー、以降はクライアント | サーバー → クライアント | ✔️ |
 
-**「ブラウザ上で C# が動く」が文字通り当てはまるのは 3 番目だけ**です。
-.NET のランタイムが WebAssembly にコンパイルされてブラウザにダウンロードされ、
-ブラウザが C# のコードを直接実行します。比喩ではありません。
+**「ブラウザ上で C# が動く」が文字通り当てはまるのは、WebAssembly が関わる下 2 つだけ**です。
+
+📘 公式の記述はこうです。
+
+> The .NET runtime and app bundle are downloaded and cached when the WebAssembly component is initially rendered.
+
+.NET のランタイムそのものがブラウザにダウンロードされ、ブラウザが C# を実行します。比喩ではありません。
 
 ステージ 1 の本文で「ブラウザ上で C# は動いていない」と書きましたが、
 これだと「2 番目なら動く」と読めてしまいます。正確にはこうです。
@@ -23,7 +34,7 @@ Blazor には C# の動き方が 3 通りあります。
 
 ---
 
-## 実験 1：今のアプリでボタンを置いてみる
+## 🔬 実験 1：今のアプリでボタンを置いてみる
 
 ホーム画面に、チュートリアルでおなじみのカウンターを一時的に足しました。
 
@@ -67,7 +78,7 @@ document.getElementById('count').textContent  →  "0"
 
 ---
 
-## 実験 2：対話レンダリングを一時的に有効にする
+## 🔬 実験 2：対話レンダリングを一時的に有効にする
 
 `Program.cs` に 2 箇所足し、ホーム画面にレンダーモードを指定しました。
 
@@ -90,8 +101,12 @@ app.MapRazorComponents<App>()
 <button class="btn btn-secondary">&#x2B;1</button>
 ```
 
-**ボタンの HTML は 1 文字も変わりません。** ここが引っかかりやすいところで、
-Blazor は `onclick` 属性を使いません。JavaScript 側からイベントリスナーを付けます。
+**ボタンの HTML は 1 文字も変わりません。** 🔬 どちらのモードでも `onclick` 属性は付きません
+（`scripts/verify-claims.sh` の [3] と [4] が両方を確認しています）。
+
+⚠️ この先は筆者の理解です: Blazor は HTML の `onclick` 属性を使わず、
+`blazor.web.js` が読み込み後に JavaScript 側からイベントを処理していると考えられます。
+HTML だけを見て「イベントハンドラが無い＝動かない」と判断できない、というのがここでの教訓です。
 
 変わったのは、HTML の中にコメントが現れたことです。
 
@@ -125,7 +140,7 @@ document.getElementById('count').textContent  →  "3"
 
 ---
 
-## 実験 2 のおまけ：最初の 3 回は捨てられた
+## 🔬 実験 2 のおまけ：最初の 3 回は捨てられた
 
 正直に書くと、**最初の 3 クリックは無視されました**。
 
@@ -181,6 +196,14 @@ count → "3"
 サーバーのメモリにコンポーネントが生き続けるので、`count` が保持されます。
 これが「ステージ 0 で触れた、Blazor Server の `Scoped` は接続単位」の正体です。
 
+📘 公式ドキュメントの記述（[Blazor dependency injection](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-10.0) の Service lifetime）:
+
+> In interactive server-side Blazor apps, the DI scope lasts for the duration of the circuit
+> (the SignalR connection between the client and server), which can result in scoped and disposable
+> transient services living much longer than the lifetime of a single component.
+
+この「circuit」が公式の用語で、ブラウザとサーバーを繋ぐ SignalR 接続のことです。
+
 ---
 
 ## 拡張ナビゲーションと混同しないこと
@@ -228,14 +251,29 @@ count → "3"
 全ページを対話モードにすると、ユーザー 1 人につきサーバーのメモリと WebSocket を 1 本占有します。
 必要なところだけに付けるのが `--interactivity None` で始めた理由です。
 
-なお **InteractiveWebAssembly**（ブラウザの中で C# が動くモード）はこのアプリでは使いません。
-DB に直接触るアプリと相性が悪く、初回に数 MB のランタイムをダウンロードする必要があるためです。
+なお **Interactive WebAssembly / Interactive Auto**（ブラウザの中で C# が動くモード）は
+このアプリでは使いません。DB に直接触るアプリと相性が悪く、
+📘 公式にあるとおり「.NET ランタイムとアプリのバンドルをダウンロードする」必要があるためです。
+⚠️ ダウンロード量がどれくらいになるかは、このアプリで実測していないので書きません。
+
 「C# がブラウザで動く」を体験したい場合は、別途小さなプロジェクトを作るのが早いです。
 
 ---
 
-## この文書を書くのに使った実験は全部戻してあります
+## この文書の主張は、いつでも再検証できます
 
-`Program.cs` と `Home.razor` への変更は `git checkout` で復元済みで、
-`git status` はクリーン、ビルドも警告 0 で通ることを確認しています。
-リポジトリにカウンターは残っていません。
+ここに書いた実験は、すべて `scripts/verify-claims.sh` に落としてあります。
+
+```bash
+./scripts/verify-claims.sh
+```
+
+一時ディレクトリへ作業ツリーを複製してから壊すので、リポジトリ自体は変更されません。
+私の書いたことを信じる必要はなく、手元で走らせて確かめてください。
+
+## 訂正履歴
+
+- **2026-09-20**: 「C# の動き方は 3 通り」と書いていましたが、**誤りです**。
+  Interactive Auto を数え落としていました。正しくは 4 つです（公式ドキュメントで確認）。
+- **2026-09-20**: ステージ 0・1 の「ブラウザ上で C# は動かない」という書き方を修正。
+  Interactive Server でも C# はブラウザでは動かないため、この書き方だと誤解を招きます。

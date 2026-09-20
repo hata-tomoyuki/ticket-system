@@ -23,7 +23,20 @@ src/HelpDesk.Core/         ドメイン。他のどのプロジェクトにも�
 src/HelpDesk.Web/          Blazor Web App。Core に依存する
 tests/HelpDesk.Tests/      テスト。Core に依存する
 docs/                      各ステージの解説
+scripts/verify-claims.sh   docs の主張を再実行して検証する
 ```
+
+## 文書の主張を検証する
+
+docs/ に書いた事実の主張は、すべて実行して再検証できます。
+
+```bash
+./scripts/verify-claims.sh
+```
+
+一時ディレクトリへ作業ツリーを複製してから壊すので、リポジトリ自体は変更されません。
+文書中の 🔬 はこのスクリプトで検証済み、📘 は公式ドキュメントに出典あり、
+⚠️ は裏を取っていない記述です。
 
 ## 補足
 

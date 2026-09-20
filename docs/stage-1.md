@@ -1,5 +1,10 @@
 # ステージ 1 — 静的 SSR でチケットを読む
 
+> **この文書の根拠について**
+> 🔬 の付いた主張は `./scripts/verify-claims.sh` で再検証できます（実行して確かめたもの）。
+> 📘 は公式ドキュメントの該当箇所を示したもの。
+> ⚠️ は筆者の理解にすぎず、裏を取っていないものです。鵜呑みにせず、必要なら自分で確かめてください。
+
 チケットの一覧と詳細が見えるようになった。**まだ書き込みは一切できない**（追加・着手・解決はステージ 3）。
 対話レンダリングも入れていないので、**C# は HTML を組み立てる一瞬だけサーバーで動き、
 返し終わったら止まる**。ボタンを押しても C# は一切呼ばれない（[レンダーモードとは何か](rendermodes.md) を参照）。
@@ -74,8 +79,8 @@ public static Ticket Create(int id, string title, string description, string req
 得られるのは「**`Ticket` 型の変数が存在する ＝ 検証を通っている**」という保証。
 件名が空の `Ticket` はこの世に存在できないので、使う側で毎回 `if (string.IsNullOrEmpty(ticket.Title))` を書かなくて済む。
 
-`ArgumentException.ThrowIfNullOrWhiteSpace` は .NET 8 で入ったヘルパで、
-`if (...) throw new ArgumentException(...)` を 1 行にしたもの。引数名も自動で入る。
+`ArgumentException.ThrowIfNullOrWhiteSpace` は `if (...) throw new ArgumentException(...)` を 1 行にしたヘルパで、
+引数名も自動で入る。🔬 空文字と空白のどちらでも例外になることは `TicketTests` で確認している。
 
 ### ③ 時刻を引数で受け取る
 
@@ -105,8 +110,12 @@ Assert.Equal(ResolvedAt, ticket.ResolvedAt);
 
 ### `DateTime` ではなく `DateTimeOffset`
 
-`DateTime` は「2026/09/14 17:00」が**どこの 17 時なのか**を持っていません（`Kind` は付いていても保存・転送で落ちる）。
-`DateTimeOffset` は `+09:00` を一緒に持つので、この曖昧さが無い。日時を保存するなら基本こちら。
+`DateTime` は「2026/09/14 17:00」が**どこの 17 時なのか**を型として持ちません。
+`DateTimeOffset` は `+09:00` を一緒に持つので、この曖昧さがありません。
+
+⚠️ 「`DateTime.Kind` は保存や転送の途中で失われやすい」とよく言われますが、
+どの経路でどう落ちるかはこのアプリで確かめていません。
+ステージ 2 で SQLite に保存するときに、実際に往復させて確かめます。
 
 ---
 
@@ -171,7 +180,8 @@ Core は「チケットを取り出せる何かが要る」とだけ言って、
 
 ### `IReadOnlyList<Ticket>` を返す理由
 
-`List<Ticket>` を返すと、受け取った画面側が `.Add()` できてしまう。
+🔬 `List<Ticket>` を返すと、受け取った画面側が `.Add()` できてしまいます
+（`IReadOnlyList` には `Add` が無く `CS1061` になることを確認済み）。
 保管庫から借りてきたリストに画面が要素を足す、という意味の分からないコードが書けなくなります。
 
 ### `CancellationToken`
@@ -198,6 +208,8 @@ builder.Services.AddSingleton<ITicketRepository, InMemoryTicketRepository>();
 
 DI の寿命は主に 3 つ。
 
+📘 出典: [Blazor dependency injection](https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/dependency-injection?view=aspnetcore-10.0) の Service lifetime
+
 | 登録方法 | インスタンスが作られる単位 |
 |---|---|
 | `AddSingleton` | アプリ起動から終了まで 1 個 |
@@ -208,9 +220,14 @@ DI の寿命は主に 3 つ。
 Scoped にするとリクエストのたびに初期データが作り直され、それはそれで今は動いてしまいますが、
 ステージ 3 で「新しいチケットを追加」を作った瞬間、追加した内容が次のリクエストで消えます。
 
-> ※ 表の `AddScoped` に付けた注は重要です。Blazor では「1 リクエスト」が素直な意味にならない場面があります。
-> 静的 SSR の今は HTTP リクエスト単位ですが、ステージ 4 で対話モードにすると **ブラウザとの接続が切れるまで**が 1 スコープになります。
-> ここはステージ 4 で実際に踏んで確かめます。
+> ※ 表の `AddScoped` に付けた注は重要です。Blazor では「1 リクエスト」が素直な意味になりません。
+> 📘 公式の記述:
+>
+> > In interactive server-side Blazor apps, the DI scope lasts for the duration of the circuit
+> > (the SignalR connection between the client and server)
+>
+> 静的 SSR の今は HTTP リクエスト単位ですが、ステージ 4 で対話モードにすると
+> **ブラウザとの接続（circuit）が切れるまで**が 1 スコープになります。ステージ 4 で実際に踏んで確かめます。
 
 **今の実装の粗さ**（ステージ 2 で解消）: Singleton の `List<Ticket>` を複数リクエストから同時に触るのは、
 読むだけの今は問題になりませんが、書き込みを足すと壊れます。ロックも `ConcurrentBag` も使っていません。
@@ -419,7 +436,7 @@ Core に置く判断もあり得ます。ステージ 0 で話した「迷った
 _ => Status.ToString(),
 ```
 
-3 つの値を網羅しているので不要に見えますが、C# の enum は `(TicketStatus)99` のようなキャストを許します。
+3 つの値を網羅しているので不要に見えますが、🔬 C# の enum は `(TicketStatus)99` のようなキャストをエラーにしません（確認済み）。
 網羅したつもりでも漏れるので、既定の枝を残しています。
 
 ---
