@@ -6,9 +6,8 @@ namespace HelpDesk.Core;
 /// </summary>
 public sealed class Ticket
 {
-    private Ticket(int id, string title, string description, string requesterName, DateTimeOffset createdAt)
+    private Ticket(string title, string description, string requesterName, DateTimeOffset createdAt)
     {
-        Id = id;
         Title = title;
         Description = description;
         RequesterName = requesterName;
@@ -16,6 +15,9 @@ public sealed class Ticket
         CreatedAt = createdAt;
     }
 
+    /// <summary>
+    /// 採番するのはデータベース。保存するまでは 0 のまま。
+    /// </summary>
     public int Id { get; private set; }
 
     public string Title { get; private set; }
@@ -38,13 +40,13 @@ public sealed class Ticket
     /// <summary>
     /// 新しいチケットを受け付ける。作られた直後は必ず <see cref="TicketStatus.Open"/>。
     /// </summary>
-    public static Ticket Create(int id, string title, string description, string requesterName, DateTimeOffset createdAt)
+    public static Ticket Create(string title, string description, string requesterName, DateTimeOffset createdAt)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         ArgumentNullException.ThrowIfNull(description);
         ArgumentException.ThrowIfNullOrWhiteSpace(requesterName);
 
-        return new Ticket(id, title.Trim(), description.Trim(), requesterName.Trim(), createdAt);
+        return new Ticket(title.Trim(), description.Trim(), requesterName.Trim(), createdAt);
     }
 
     /// <summary>対応を開始する。未対応のチケットだけが着手できる。</summary>

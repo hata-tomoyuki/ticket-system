@@ -20,8 +20,9 @@ HelpDesk.slnx              ソリューション
 Directory.Build.props      全プロジェクト共通のビルド設定
 global.json                使う .NET SDK の固定
 src/HelpDesk.Core/         ドメイン。他のどのプロジェクトにも依存しない
-src/HelpDesk.Web/          Blazor Web App。Core に依存する
-tests/HelpDesk.Tests/      テスト。Core に依存する
+src/HelpDesk.Infrastructure/  データベースまわり。Core に依存する
+src/HelpDesk.Web/          Blazor Web App。Core と Infrastructure に依存する
+tests/HelpDesk.Tests/      テスト
 docs/                      各ステージの解説
 scripts/verify-claims.sh   docs の主張を再実行して検証する
 ```
@@ -35,7 +36,7 @@ docs/ に書いた事実の主張は、すべて実行して再検証できま�
 ```
 
 一時ディレクトリへ作業ツリーを複製してから壊すので、リポジトリ自体は変更されません。
-30 件のチェックが走ります。
+39 件のチェックが走ります。
 
 ## 補足
 
@@ -47,8 +48,8 @@ docs/ に書いた事実の主張は、すべて実行して再検証できま�
 |---|---|---|
 | 0 | ソリューション構成 | 完了 → [docs/stage-0.md](docs/stage-0.md) |
 | 1 | 静的 SSR でチケット一覧・詳細 | 完了 → [docs/stage-1.md](docs/stage-1.md) |
-| 2 | EF Core + SQLite | これから |
-| 3 | 起票・編集フォームと検証 | |
+| 2 | EF Core + SQLite | 完了 → [docs/stage-2.md](docs/stage-2.md) |
+| 3 | 起票・編集フォームと検証 | これから |
 | 4 | InteractiveServer の部分導入 | |
 | 5 | ログインとロール | |
 | 6 | 更新のリアルタイム反映 | |

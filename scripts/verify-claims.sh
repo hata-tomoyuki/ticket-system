@@ -60,7 +60,7 @@ check "警告 0 でビルドが通る" "0" \
       "$(grep -oE '[0-9]+ 個の警告' "$WORK/build.log" | head -1 | grep -oE '[0-9]+')"
 
 ( cd "$REPO" && dotnet test HelpDesk.slnx > "$WORK/test.log" 2>&1 )
-check "テストが 14 件すべて合格する" "失敗: 0、合格: 14" \
+check "テストが 21 件すべて合格する" "失敗: 0、合格: 21" \
       "$(grep -oE '失敗:[[:space:]]*[0-9]+、合格:[[:space:]]*[0-9]+' "$WORK/test.log" | head -1 | tr -s ' ')"
 
 # --------------------------------------------------------------------
@@ -314,6 +314,49 @@ if start_app "$d"; then
       -o "$WORK/posted.html"
   check "curl の POST だけで C# の Submit() が動く" "1" \
         "$(grep -c 'verified-by-curl' "$WORK/posted.html" || true)"
+fi
+pkill -f "HelpDesk.Web" >/dev/null 2>&1
+
+# --------------------------------------------------------------------
+echo
+echo "[10] EF Core + SQLite  (stage-2.md)"
+# --------------------------------------------------------------------
+d="$(clone sqlite)"
+rm -f "$d/src/HelpDesk.Web/helpdesk.db"
+if start_app "$d"; then
+  check "一覧は 5 件"                  "5 件" "$(count /tickets)"
+  check "?status=Open は 2 件"          "2 件" "$(count '/tickets?status=Open')"
+  check "データベースに 5 件入っている"   "5" \
+        "$(sqlite3 "$d/src/HelpDesk.Web/helpdesk.db" 'SELECT COUNT(*) FROM Tickets;' 2>/dev/null)"
+  check "状態は数値ではなく文字列で保存される" "Open" \
+        "$(sqlite3 "$d/src/HelpDesk.Web/helpdesk.db" 'SELECT Status FROM Tickets WHERE Id = 1;' 2>/dev/null)"
+  check "日時は UTC の文字列で保存される" "2026-09-14T00:12:00.0000000Z" \
+        "$(sqlite3 "$d/src/HelpDesk.Web/helpdesk.db" 'SELECT CreatedAt FROM Tickets WHERE Id = 1;' 2>/dev/null)"
+  check "画面には JST で表示される" "1" \
+        "$(curl -s "http://localhost:$PORT/tickets" | grep -c '2026/09/14 09:12' || true)"
+  check "一覧は受付日時の降順（先頭が最新）" "2026/09/18 08:55" \
+        "$(curl -s "http://localhost:$PORT/tickets" | grep -oE '20[0-9]{2}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}' | head -1)"
+fi
+pkill -f "HelpDesk.Web" >/dev/null 2>&1
+
+# --------------------------------------------------------------------
+echo
+echo "[11] 変換をやめると SQLite は日時で並べ替えられない  (stage-2.md)"
+# --------------------------------------------------------------------
+d="$(clone nodateconv)"
+python3 - "$d" <<'PYEOF'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]) / "src/HelpDesk.Infrastructure/TicketConfiguration.cs"
+s = p.read_text()
+s = s.replace(".HasConversion(UtcTextConverter.Instance)\n            .HasMaxLength(28)\n            .IsRequired();", ".IsRequired();")
+s = s.replace(".HasConversion(UtcTextConverter.Instance!)\n            .HasMaxLength(28);", ";")
+p.write_text(s)
+PYEOF
+rm -f "$d/src/HelpDesk.Web/helpdesk.db"
+if start_app "$d"; then
+  check "一覧が 500 になる" "500" "$(code /tickets)"
+  check "SQLite does not support ... in ORDER BY clauses が出る" "1" \
+        "$(grep -c "SQLite does not support expressions of type 'DateTimeOffset' in ORDER BY" "$WORK/server.log" > /dev/null && echo 1 || echo 0)"
 fi
 pkill -f "HelpDesk.Web" >/dev/null 2>&1
 
