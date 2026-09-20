@@ -30,8 +30,8 @@ docs/                      各ステージの解説
 | # | 内容 | 状態 |
 |---|---|---|
 | 0 | ソリューション構成 | 完了 → [docs/stage-0.md](docs/stage-0.md) |
-| 1 | 静的 SSR でチケット一覧・詳細 | これから |
-| 2 | EF Core + SQLite | |
+| 1 | 静的 SSR でチケット一覧・詳細 | 完了 → [docs/stage-1.md](docs/stage-1.md) |
+| 2 | EF Core + SQLite | これから |
 | 3 | 起票・編集フォームと検証 | |
 | 4 | InteractiveServer の部分導入 | |
 | 5 | ログインとロール | |

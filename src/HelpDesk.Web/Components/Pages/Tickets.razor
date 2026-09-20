@@ -1,0 +1,77 @@
+@page "/tickets"
+@inject ITicketRepository Repository
+
+<PageTitle>チケット一覧</PageTitle>
+
+<h1>チケット一覧</h1>
+
+<nav class="mb-3">
+    @foreach (var (label, value) in FilterOptions)
+    {
+        <a class="btn btn-sm me-1 @(value == StatusQuery ? "btn-primary" : "btn-outline-primary")"
+           href="@BuildFilterUrl(value)">@label</a>
+    }
+</nav>
+
+@if (tickets.Count == 0)
+{
+    <p class="text-muted">該当するチケットはありません。</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">件名</th>
+                <th scope="col">状態</th>
+                <th scope="col">依頼者</th>
+                <th scope="col">受付日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ticket in tickets)
+            {
+                <tr>
+                    <td>@ticket.Id</td>
+                    <td><a href="/tickets/@ticket.Id">@ticket.Title</a></td>
+                    <td><TicketStatusBadge Status="ticket.Status" /></td>
+                    <td>@ticket.RequesterName</td>
+                    <td>@ticket.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="text-muted small">@tickets.Count 件</p>
+}
+
+@code {
+    // URL の ?status=... を受け取る。文字列のまま受けて、下で enum に変換する。
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
+    private IReadOnlyList<Ticket> tickets = [];
+
+    private static readonly (string Label, string? Value)[] FilterOptions =
+    [
+        ("すべて", null),
+        ("未対応", nameof(TicketStatus.Open)),
+        ("対応中", nameof(TicketStatus.InProgress)),
+        ("解決済み", nameof(TicketStatus.Resolved)),
+    ];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 外から来た文字列を、ドメインの型に変換するのは画面側の仕事。
+        // 変換できない値（?status=xyz）は「指定なし」として扱い、全件を返す。
+        TicketStatus? status = Enum.TryParse<TicketStatus>(StatusQuery, ignoreCase: true, out var parsed)
+            ? parsed
+            : null;
+
+        tickets = await Repository.ListAsync(status);
+    }
+
+    private static string BuildFilterUrl(string? status) =>
+        status is null ? "/tickets" : $"/tickets?status={status}";
+}

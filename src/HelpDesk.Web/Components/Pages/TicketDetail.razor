@@ -1,0 +1,61 @@
+@page "/tickets/{Id:int}"
+@inject ITicketRepository Repository
+@inject NavigationManager Navigation
+
+@if (ticket is not null)
+{
+    <PageTitle>@ticket.Title</PageTitle>
+
+    <p><a href="/tickets">&laquo; チケット一覧へ</a></p>
+
+    <h1>@ticket.Title</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">状態</dt>
+        <dd class="col-sm-9"><TicketStatusBadge Status="ticket.Status" /></dd>
+
+        <dt class="col-sm-3">依頼者</dt>
+        <dd class="col-sm-9">@ticket.RequesterName</dd>
+
+        <dt class="col-sm-3">受付日時</dt>
+        <dd class="col-sm-9">@ticket.CreatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+
+        @if (ticket.ResolvedAt is { } resolvedAt)
+        {
+            <dt class="col-sm-3">解決日時</dt>
+            <dd class="col-sm-9">@resolvedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+        }
+    </dl>
+
+    <h2 class="h5">内容</h2>
+    <p style="white-space: pre-wrap;">@ticket.Description</p>
+
+    @if (ticket.ResolutionComment is { } comment)
+    {
+        <h2 class="h5">解決内容</h2>
+        <p style="white-space: pre-wrap;">@comment</p>
+    }
+
+    <div class="alert alert-secondary mt-4" role="alert">
+        着手・解決といった操作はステージ 3 で追加します。
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Ticket? ticket;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ticket = await Repository.FindAsync(Id);
+
+        if (ticket is null)
+        {
+            // 「一覧に無い ID を直接 URL で開いた」場合。
+            // 404 を返しつつ NotFound ページを描画する。
+            Navigation.NotFound();
+        }
+    }
+}

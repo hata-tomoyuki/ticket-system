@@ -1,0 +1,26 @@
+@* 状態を色付きのバッジで表示するだけの小さなコンポーネント。
+   「Open を人間向けにどう呼ぶか」は画面の都合なので、Core ではなくここに置く。 *@
+
+<span class="badge @CssClass">@Label</span>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public TicketStatus Status { get; set; }
+
+    private string Label => Status switch
+    {
+        TicketStatus.Open => "未対応",
+        TicketStatus.InProgress => "対応中",
+        TicketStatus.Resolved => "解決済み",
+        _ => Status.ToString(),
+    };
+
+    private string CssClass => Status switch
+    {
+        TicketStatus.Open => "text-bg-danger",
+        TicketStatus.InProgress => "text-bg-warning",
+        TicketStatus.Resolved => "text-bg-success",
+        _ => "text-bg-secondary",
+    };
+}
