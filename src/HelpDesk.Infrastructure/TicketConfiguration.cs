@@ -6,11 +6,7 @@ namespace HelpDesk.Infrastructure;
 
 /// <summary>
 /// Ticket をどうテーブルへ対応づけるか。
-///
-/// 対応づけを「外から」与えているのがポイント。
-/// Ticket.cs には [Key] も [MaxLength] も付けていない。
-/// 属性を付けると Core が EF Core を参照することになり、
-/// ステージ 0 で立てた「Core は何にも依存しない」という壁が崩れる。
+/// この設定は Core からは見えない。Ticket.cs には属性が 1 つも付いていない。
 /// </summary>
 internal sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
 {
@@ -24,7 +20,15 @@ internal sealed class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Property(ticket => ticket.Title).HasMaxLength(200).IsRequired();
         builder.Property(ticket => ticket.Description).HasMaxLength(4000).IsRequired();
         builder.Property(ticket => ticket.RequesterName).HasMaxLength(100).IsRequired();
-        builder.Property(ticket => ticket.CreatedAt).IsRequired();
+        // DateTimeOffset をそのまま保存すると SQLite で並べ替えできない。UtcTextConverter を参照。
+        builder.Property(ticket => ticket.CreatedAt)
+            .HasConversion(UtcTextConverter.Instance)
+            .HasMaxLength(28)
+            .IsRequired();
+
+        builder.Property(ticket => ticket.ResolvedAt)
+            .HasConversion(UtcTextConverter.Instance!)
+            .HasMaxLength(28);
         builder.Property(ticket => ticket.ResolutionComment).HasMaxLength(4000);
 
         // enum を数値ではなく文字列で保存する。
