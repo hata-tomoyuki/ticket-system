@@ -1,5 +1,12 @@
 # ステージ 2 — EF Core + SQLite に差し替える
 
+> **このステージの差分**
+> ```bash
+> ./scripts/stage-diff.sh 2          # コードだけ
+> ./scripts/stage-diff.sh 2 --files  # 変更ファイル一覧
+> ```
+> GitHub: [stage-1...stage-2](https://github.com/hata-tomoyuki/ticket-system/compare/stage-1...stage-2)
+
 保管庫をメモリから SQLite に移した。アプリを再起動してもデータが残る。
 
 ## まず、ステージ 1 の予告の答え合わせ

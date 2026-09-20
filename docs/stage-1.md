@@ -1,5 +1,12 @@
 # ステージ 1 — 静的 SSR でチケットを読む
 
+> **このステージの差分**
+> ```bash
+> ./scripts/stage-diff.sh 1          # コードだけ
+> ./scripts/stage-diff.sh 1 --files  # 変更ファイル一覧
+> ```
+> GitHub: [stage-0...stage-1](https://github.com/hata-tomoyuki/ticket-system/compare/stage-0...stage-1)
+
 チケットの一覧と詳細が見えるようになった。**書き込みはまだ一切できない**（起票・着手・解決はステージ 3）。
 ボタンを押しても C# は呼ばれない（理由は [なぜ今はボタンを押しても動かないのか](rendermodes.md)）。
 

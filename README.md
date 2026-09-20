@@ -24,8 +24,30 @@ src/HelpDesk.Infrastructure/  データベースまわり。Core に依存する
 src/HelpDesk.Web/          Blazor Web App。Core と Infrastructure に依存する
 tests/HelpDesk.Tests/      テスト
 docs/                      各ステージの解説
+scripts/stage-diff.sh      ステージごとの差分を表示する
 scripts/verify-claims.sh   docs の主張を再実行して検証する
 ```
+
+## 各ステージの差分を見る
+
+**このリポジトリで読むべき主対象は差分です。** ステージごとにタグが打ってあります。
+
+```bash
+./scripts/stage-diff.sh 2            # ステージ 2 のコード差分（src/ と tests/）
+```
+
+```bash
+./scripts/stage-diff.sh 2 --files    # 変更されたファイル名だけ
+```
+
+```bash
+./scripts/stage-diff.sh 2 --all      # docs やスクリプトも含めた全差分
+```
+
+GitHub で見る場合は compare が使えます。
+
+- [stage-0...stage-1](https://github.com/hata-tomoyuki/ticket-system/compare/stage-0...stage-1)
+- [stage-1...stage-2](https://github.com/hata-tomoyuki/ticket-system/compare/stage-1...stage-2)
 
 ## 文書の主張を検証する
 
