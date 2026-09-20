@@ -1,5 +1,11 @@
 # ステージ 0 — ソリューションの骨組み
 
+> **このステージで作ったもの**
+> ```bash
+> git show stage-0
+> ```
+> GitHub: [最初のコミット](https://github.com/hata-tomoyuki/ticket-system/commit/stage-0)
+
 画面の機能はまだ何も無い。作ったのは「これから機能を足していく入れ物」と、
 **その入れ物が壊れていないことを自動で見張る仕組み**。
 
